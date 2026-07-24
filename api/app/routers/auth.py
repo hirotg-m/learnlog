@@ -8,12 +8,15 @@ from app.dependencies import get_auth_service, require_session
 from app.models.auth import LoginRequest, LoginResponse, SessionInfo, SessionResponse
 from app.services.auth_service import AuthService
 
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, response: Response, service: AuthService = Depends(get_auth_service)) -> LoginResponse:
+def login(
+    payload: LoginRequest,
+    response: Response,
+    service: AuthService = Depends(get_auth_service),
+) -> LoginResponse:
     result = service.login(payload.pin)
     secure_cookie = os.getenv("COOKIE_SECURE", "true").lower() == "true"
     response.set_cookie(

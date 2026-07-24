@@ -6,8 +6,9 @@ from app.dependencies import get_calendar_service, require_session
 from app.models.calendar import CalendarDayResponse, CalendarMonthResponse
 from app.services.calendar_service import CalendarService
 
-
-router = APIRouter(prefix="/calendar", tags=["calendar"], dependencies=[Depends(require_session)])
+router = APIRouter(
+    prefix="/calendar", tags=["calendar"], dependencies=[Depends(require_session)]
+)
 
 
 @router.get("/month", response_model=CalendarMonthResponse)
@@ -20,5 +21,7 @@ def get_month(
 
 
 @router.get("/day", response_model=CalendarDayResponse)
-def get_day(date: str, service: CalendarService = Depends(get_calendar_service)) -> CalendarDayResponse:
+def get_day(
+    date: str, service: CalendarService = Depends(get_calendar_service)
+) -> CalendarDayResponse:
     return service.day(target_date=date)
