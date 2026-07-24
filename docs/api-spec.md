@@ -171,6 +171,8 @@
 
 `GET /qualifications/{qualificationId}`
 
+`includeStats` クエリ(既定値 `false`)は 5.1 と同様に集計フィールドの有無を切り替える。資格詳細画面で集計を表示する場合は `includeStats=true` を指定する。
+
 ### 5.4 資格更新
 
 `PATCH /qualifications/{qualificationId}`
@@ -431,6 +433,7 @@
 | `learnlog-study-logs` | 学習記録 |
 | `learnlog-milestones` | マイルストーン |
 | `learnlog-login-attempts` | ログイン失敗カウンタ |
+| `learnlog-sessions` | ログインセッション |
 
 ### 10.1 learnlog-qualifications
 
@@ -458,7 +461,13 @@
 - プライマリキー: `id`(HASH)。`id = "singleton"` の 1 レコードのみを保持し、`failCount`、`lockedUntil` を保持する
 - Lambda はステートレスなため、この値を DynamoDB 上で管理し、リクエストごとに読み書きする。ロック解除後は `failCount` を 0 にリセットする
 
-### 10.5 集計値の扱い
+### 10.5 learnlog-sessions
+
+- プライマリキー: `token`(HASH)。`expiresAt` と、TTL 属性 `ttl`(UNIX epoch 秒、`expiresAt` と同じ値)を保持する
+- Lambda は呼び出しごとに別の実行環境になりうるため、ログインセッションをプロセス内(メモリ)に保持すると、ログイン直後の別リクエストが別インスタンスに割り振られた際に未ログイン扱いになってしまう。そのためセッションもこのテーブルに永続化し、`GET /auth/session` 等はここを参照する
+- `ttl` は DynamoDB TTL による自動削除用。期限切れの判定自体はアプリ側で `expiresAt` を見て行うため、`ttl` はあくまで不要になったレコードを溜めないための保険
+
+### 10.6 集計値の扱い
 
 `totalHours` / `studyLogCount` / `lastStudiedAt` / `overdueMilestoneCount`(5.1, 7.1)は、`learnlog-qualifications` に非正規化カウンタとして持たず、`learnlog-study-logs` / `learnlog-milestones` の `ByQualification` GSI への Query 結果からその都度計算する。個人利用規模のデータ量であれば、書き込みのたびにカウンタを更新する方式(競合対策が必要)より単純で安全なため。
 

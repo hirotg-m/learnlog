@@ -98,7 +98,8 @@
     "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-study-logs/index/*",
     "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-milestones",
     "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-milestones/index/*",
-    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-login-attempts"
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-login-attempts",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-sessions"
   ]
 }
 ```
