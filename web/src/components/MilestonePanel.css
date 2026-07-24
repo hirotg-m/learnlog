@@ -1,0 +1,86 @@
+.milestonePanel {
+  display: grid;
+  gap: 14px;
+}
+
+.milestonePanel h2 {
+  margin: 0;
+}
+
+.milestoneForm {
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneForm input,
+.milestoneForm select,
+.milestoneForm button {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.milestoneForm button {
+  border: 0;
+  font-weight: 700;
+  color: #2b1705;
+  background: linear-gradient(90deg, #f08f56, #f1d04f);
+}
+
+.hintText {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.milestoneList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneList li {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.milestoneHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.milestoneHead strong {
+  font-size: 0.98rem;
+}
+
+.metaLine {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.badge {
+  border-radius: 999px;
+  border: 0;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.badge.pending {
+  color: #ffe2af;
+  background: rgba(239, 139, 87, 0.28);
+}
+
+.badge.achieved {
+  color: #c9f9cb;
+  background: rgba(71, 180, 102, 0.3);
+}

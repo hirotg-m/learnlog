@@ -1,0 +1,84 @@
+.qualificationPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.qualificationPanel h2 {
+  margin: 0;
+}
+
+.qualificationPanel header p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.qualificationForm {
+  display: grid;
+  gap: 10px;
+}
+
+.qualificationForm input,
+.qualificationForm select,
+.qualificationForm button {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.inlineFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.qualificationForm button {
+  background: linear-gradient(90deg, #3cab9e, #f3af4b);
+  color: #2b1705;
+  font-weight: 700;
+  border: 0;
+}
+
+.qualificationList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.qualificationList li {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.titleLine {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleLine span {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.titleLine .active {
+  background: rgba(81, 216, 131, 0.25);
+}
+
+.titleLine .closed {
+  background: rgba(170, 180, 195, 0.25);
+}
+
+.nameLine,
+.statsLine {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+}

@@ -1,0 +1,82 @@
+.studyLogPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.studyLogPanel h2 {
+  margin: 0;
+}
+
+.studyForm {
+  display: grid;
+  gap: 10px;
+}
+
+.studyForm input,
+.studyForm select,
+.studyForm textarea,
+.studyForm button {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 10px;
+  font: inherit;
+}
+
+.studyForm select,
+.studyForm input,
+.studyForm button {
+  min-height: 44px;
+}
+
+.studyForm textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.twoCols {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.studyForm button {
+  border: 0;
+  font-weight: 700;
+  color: #2b1705;
+  background: linear-gradient(90deg, #4ab89d, #f1c34f);
+}
+
+.studyLogList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.studyLogList li {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.studyLogList p {
+  margin: 0;
+}
+
+.studyLogList p + p {
+  margin-top: 5px;
+}
+
+.studyLogList .memo {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 480px) {
+  .twoCols {
+    grid-template-columns: 1fr;
+  }
+}
