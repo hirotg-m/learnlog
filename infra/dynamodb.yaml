@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   learnlog 用 DynamoDB テーブル群。
-  資格・学習記録・マイルストーン・ログイン失敗カウンタをエンティティごとに分けたテーブルで管理する。
+  資格・学習記録・マイルストーン・ログイン失敗カウンタ・セッションをエンティティごとに分けたテーブルで管理する。
   詳細な設計は docs/api-spec.md の 10 章を参照。
 
 Resources:
@@ -113,6 +113,27 @@ Resources:
         - AttributeName: id
           KeyType: HASH
 
+  # セッション (ログイン中のトークン)
+  # ログイン失敗カウンタと同様、失っても実害は再ログインで済む(ユーザーデータではない)ため、
+  # DeletionProtectionEnabled / PointInTimeRecoverySpecification は設定しない。
+  # ttl 属性で DynamoDB TTL による自動削除を有効にし、期限切れセッションを溜めない
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: learnlog-sessions
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      AttributeDefinitions:
+        - AttributeName: token
+          AttributeType: S
+      KeySchema:
+        - AttributeName: token
+          KeyType: HASH
+
 Outputs:
   QualificationsTableName:
     Value: !Ref QualificationsTable
@@ -130,3 +151,7 @@ Outputs:
     Value: !Ref LoginAttemptsTable
   LoginAttemptsTableArn:
     Value: !GetAtt LoginAttemptsTable.Arn
+  SessionsTableName:
+    Value: !Ref SessionsTable
+  SessionsTableArn:
+    Value: !GetAtt SessionsTable.Arn
