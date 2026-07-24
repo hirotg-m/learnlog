@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  learnlog 用 DynamoDB テーブル群。
+  資格・学習記録・マイルストーン・ログイン失敗カウンタをエンティティごとに分けたテーブルで管理する。
+  詳細な設計は docs/api-spec.md の 10 章を参照。
+
+Resources:
+  # 資格
+  QualificationsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: learnlog-qualifications
+      BillingMode: PAY_PER_REQUEST
+      DeletionProtectionEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  # 学習記録
+  StudyLogsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: learnlog-study-logs
+      BillingMode: PAY_PER_REQUEST
+      DeletionProtectionEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: qualificationId
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: S
+        # date (yyyy-mm-dd) から導出する属性 (例: "2026-07-24" -> "2026-07")。
+        # date を書き込む/更新するときは必ず同時に再計算して書き込むこと (docs/api-spec.md 10.2 参照)
+        - AttributeName: month
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        # 資格ごとの学習記録一覧・日付範囲検索用
+        - IndexName: ByQualification
+          KeySchema:
+            - AttributeName: qualificationId
+              KeyType: HASH
+            - AttributeName: date
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        # カレンダー(月間・日別)集計用。資格をまたいで日付で検索する
+        - IndexName: ByMonth
+          KeySchema:
+            - AttributeName: month
+              KeyType: HASH
+            - AttributeName: date
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  # マイルストーン
+  MilestonesTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: learnlog-milestones
+      BillingMode: PAY_PER_REQUEST
+      DeletionProtectionEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: qualificationId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        # 資格ごとのマイルストーン一覧用
+        - IndexName: ByQualification
+          KeySchema:
+            - AttributeName: qualificationId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # ログイン失敗カウンタ (単一レコードのみ保持)
+  # 学習記録などのユーザーデータと異なり失っても実害が小さい(ロックが解除されるだけ)ため、
+  # 他のテーブルと違い DeletionProtectionEnabled / PointInTimeRecoverySpecification は設定しない
+  LoginAttemptsTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: learnlog-login-attempts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+Outputs:
+  QualificationsTableName:
+    Value: !Ref QualificationsTable
+  QualificationsTableArn:
+    Value: !GetAtt QualificationsTable.Arn
+  StudyLogsTableName:
+    Value: !Ref StudyLogsTable
+  StudyLogsTableArn:
+    Value: !GetAtt StudyLogsTable.Arn
+  MilestonesTableName:
+    Value: !Ref MilestonesTable
+  MilestonesTableArn:
+    Value: !GetAtt MilestonesTable.Arn
+  LoginAttemptsTableName:
+    Value: !Ref LoginAttemptsTable
+  LoginAttemptsTableArn:
+    Value: !GetAtt LoginAttemptsTable.Arn

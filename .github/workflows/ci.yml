@@ -4,6 +4,17 @@ on:
   pull_request:
 
 jobs:
+  markdown:
+    name: Markdown 検査
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Markdown lint を実行
+        run: npx --yes markdownlint-cli2 --config .markdownlint.jsonc "README.md" "CLAUDE.md" "docs/**/*.md" ".github/**/*.md"
+
   frontend:
     name: フロントエンド検査
     runs-on: ubuntu-latest
