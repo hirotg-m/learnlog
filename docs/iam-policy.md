@@ -79,6 +79,8 @@
 
 #### DynamoDB
 
+テーブルはエンティティごとに分割している(infra/dynamodb.yaml、docs/api-spec.md 10 章参照)。GSI に対する `Query` も行うため、各テーブルの `index/*` も Resource に含める。
+
 ```json
 {
   "Effect": "Allow",
@@ -90,7 +92,14 @@
     "dynamodb:Query",
     "dynamodb:Scan"
   ],
-  "Resource": "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-tbl"
+  "Resource": [
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-qualifications",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-study-logs",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-study-logs/index/*",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-milestones",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-milestones/index/*",
+    "arn:aws:dynamodb:<リージョン>:<アカウントID>:table/learnlog-login-attempts"
+  ]
 }
 ```
 
