@@ -9,12 +9,12 @@ applyTo: "**"
 
 ## インフラ構成 (AWS)
 - フロントエンド: S3 静的ホスティング + CloudFront (HTTPS)
-- バックエンド: API Gateway + Lambda (FastAPI)
+- バックエンド: API Gateway + Lambda (FastAPI + Mangum)
 - データベース: DynamoDB
 
 ## ディレクトリ構成
-- `web/` — React フロントエンド
-- `api/` — FastAPI バックエンド
+- `web/` — Node.js 24 / TypeScript / React
+- `api/` — Python 3.12 / FastAPI
 - `docs/` — ドキュメント
 - `infra/` — インフラ構成 (CloudFormation YAML)
 
