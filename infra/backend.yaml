@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  learnlog バックエンド実行基盤 (Lambda + API Gateway (HTTP API) + 実行ロール)。
+  DynamoDB テーブルは infra/dynamodb.yaml で作成済みであることが前提。
+  Lambda のコード自体はこのテンプレートでは配置しない (プレースホルダーのみ) ため、
+  スタック作成後に .github/workflows/cd-dev.yml, cd-prod.yml の
+  `aws lambda update-function-code` で実際のコードをデプロイすること。
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Default: prod
+    Description: 環境名。Lambda 関数名・API 名の識別に使う。
+
+  FrontendOrigin:
+    Type: String
+    Description: >
+      CORS で許可するフロントエンドのオリジン (例: https://xxxxxxxxxxxxxx.cloudfront.net)。
+      infra/frontend.yaml の DistributionDomainName 出力に https:// を付けた値を指定する。
+
+  LearnlogPin:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    MaxLength: 8
+    AllowedPattern: "[0-9]{8}"
+    Description: ログイン用の8桁PIN。
+
+  CookieSecure:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: セッションCookieのSecure属性。HTTPSで配信する本番運用では true のままにする。
+
+Resources:
+  # docs/aws/iam-policy.md の learnlog-lambda-role と同等の権限を CloudFormation 化したもの
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub learnlog-lambda-role-${EnvironmentName}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-qualifications
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-study-logs
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-study-logs/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-milestones
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-milestones/index/*
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-login-attempts
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/learnlog-sessions
+
+  ApiFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub learnlog-api-${EnvironmentName}
+      Runtime: python3.12
+      Handler: app.main.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 10
+      MemorySize: 256
+      # スタック作成には Code が必須のため、CI が本物のコードを流し込むまでのプレースホルダーを置く。
+      # 中身は cd-dev.yml / cd-prod.yml の `aws lambda update-function-code` で上書きされる
+      Code:
+        ZipFile: |
+          def handler(event, context):
+              return {
+                  "statusCode": 503,
+                  "body": "learnlog api is not deployed yet. Run the CD workflow to publish app code.",
+              }
+      Environment:
+        Variables:
+          STORE_BACKEND: dynamodb
+          FRONTEND_ORIGIN: !Ref FrontendOrigin
+          COOKIE_SECURE: !Ref CookieSecure
+          LEARNLOG_PIN: !Ref LearnlogPin
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub learnlog-api-${EnvironmentName}
+      ProtocolType: HTTP
+      # CORS は FastAPI 側 (CORSMiddleware, FRONTEND_ORIGIN) で処理するため API Gateway 側では設定しない
+
+  LambdaIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt ApiFunction.Arn
+      PayloadFormatVersion: "2.0"
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      Target: !Sub integrations/${LambdaIntegration}
+
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ApiFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway エンドポイントURL。web/.env の VITE_API_ENDPOINT には末尾に /api/v1 を付けて設定する
+    Value: !GetAtt HttpApi.ApiEndpoint
+  LambdaFunctionName:
+    Value: !Ref ApiFunction
+  LambdaFunctionArn:
+    Value: !GetAtt ApiFunction.Arn
+  LambdaRoleArn:
+    Value: !GetAtt LambdaExecutionRole.Arn

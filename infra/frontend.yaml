@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  learnlog フロントエンド配信用リソース (S3 + CloudFront)。
+  web/ のビルド成果物 (dist/) を非公開の S3 バケットに置き、CloudFront (Origin Access Control 経由) のみが
+  読み取れる構成にする。デプロイ (S3 sync / CloudFront invalidation) は .github/workflows/cd-dev.yml,
+  cd-prod.yml が担当し、このテンプレートは配信基盤の作成のみを行う。
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Default: prod
+    Description: 環境名。バケット名・ディストリビューションの識別に使う。
+
+Resources:
+  # 静的ファイル配置用バケット。CloudFront (OAC) 以外からの読み取りは全て拒否する
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      # S3 バケット名はグローバルで一意である必要があるためアカウントIDを含める
+      BucketName: !Sub learnlog-frontend-${EnvironmentName}-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      # `npm run build` を誤って古い内容で `s3 sync --delete` してしまった場合の保険。
+      # 30日でノンカレントバージョンを自動削除しコストを抑える
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 30
+
+  # CloudFront が S3 バケットへ署名付きリクエストでアクセスするための設定 (OAI の後継)
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub learnlog-frontend-${EnvironmentName}
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub learnlog frontend (${EnvironmentName})
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        IPV6Enabled: true
+        # 日本からのアクセスが主なため、北米・欧州に加えアジアのエッジロケーションも含める
+        PriceClass: PriceClass_200
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt FrontendOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          # マネージドポリシー "CachingOptimized"
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        # SPA なので、S3 側に存在しないパスへの直接アクセス (リロード等) も index.html を返す
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub ${FrontendBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}
+
+Outputs:
+  BucketName:
+    Value: !Ref FrontendBucket
+  DistributionId:
+    Value: !Ref FrontendDistribution
+  DistributionDomainName:
+    Description: CloudFront の配信ドメイン。https:// を付けたものがサイトURL、かつ api/backend.yaml の FrontendOrigin パラメータに渡す値
+    Value: !GetAtt FrontendDistribution.DomainName
