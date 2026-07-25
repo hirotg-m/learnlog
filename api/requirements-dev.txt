@@ -1,5 +1,7 @@
 # 結合テスト (tests/integration) で DynamoDB を模擬するために使用する
 -r requirements.txt
+# テスト実行に必要
+pytest==9.0.3
 # server: uvicorn で実際に起動したバックエンドに対する結合テスト (tests/integration/test_api_server.py) で
 # 別プロセスからも接続できる、実サーバーとして動く moto を使うために必要
 moto[dynamodb,server]==5.2.2
