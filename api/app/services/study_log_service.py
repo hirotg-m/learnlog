@@ -46,7 +46,7 @@ class StudyLogService:
         qualification = self.store.get_qualification(payload.qualificationId)
         if qualification is None:
             raise HTTPException(status_code=404, detail="qualification not found")
-        if qualification.status == "closed":
+        if qualification.status == "close":
             raise HTTPException(
                 status_code=400, detail="closed qualification cannot accept new logs"
             )

@@ -1,0 +1,216 @@
+.studyLogPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.studyLogPanel h3 {
+  margin: 0;
+}
+
+.hintText {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.studyForm {
+  display: grid;
+  gap: 10px;
+}
+
+.studyForm input,
+.studyForm select,
+.studyForm textarea,
+.studyForm button {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 10px;
+  font: inherit;
+}
+
+.studyForm select,
+.studyForm input,
+.studyForm button {
+  min-height: 44px;
+  min-width: 0;
+}
+
+.studyForm textarea {
+  resize: vertical;
+  min-height: 88px;
+}
+
+.twoCols {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  font-size: 0.76rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.studyForm button {
+  border: 0;
+  font-weight: 700;
+  color: #2b1705;
+  background: linear-gradient(90deg, #4ab89d, #f1c34f);
+}
+
+.studyLogList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.studyLogList > li {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.studyLogList p {
+  margin: 0;
+}
+
+.studyLogList .memo {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.studyLogList > li.empty {
+  color: rgba(255, 255, 255, 0.6);
+  border-style: dashed;
+}
+
+.dayHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dayTotal {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+}
+
+.dayItems {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dayItems li {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dayItems li:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dayItems p + p {
+  margin-top: 4px;
+}
+
+.itemHours {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.88rem;
+}
+
+.itemActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: #fff;
+}
+
+.linkButton.danger {
+  color: #f1a1a1;
+}
+
+.linkButton.danger:hover {
+  color: #ff6b6b;
+}
+
+.studyEditForm {
+  display: grid;
+  gap: 10px;
+}
+
+.studyEditForm input,
+.studyEditForm textarea {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 10px;
+  font: inherit;
+  min-width: 0;
+}
+
+.studyEditForm input {
+  min-height: 40px;
+}
+
+.studyEditForm textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.studyEditActions {
+  display: flex;
+  gap: 8px;
+}
+
+.studyEditActions button {
+  height: 40px;
+  border-radius: 10px;
+  border: 0;
+  font-weight: 700;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.studyEditActions button[type="submit"] {
+  color: #2b1705;
+  background: linear-gradient(90deg, #4ab89d, #f1c34f);
+}
+
+.studyEditActions button[type="button"] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 480px) {
+  .twoCols {
+    grid-template-columns: 1fr;
+  }
+}

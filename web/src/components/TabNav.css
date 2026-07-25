@@ -1,0 +1,27 @@
+.tabNav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.tabNav button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8f3e7;
+  border-radius: 14px;
+  padding: 10px 8px;
+  font-weight: 600;
+}
+
+.tabNav .isActive {
+  background: linear-gradient(120deg, #3ca8a0, #efaf4f);
+  border-color: transparent;
+  color: #2b1b08;
+}
+
+@media (max-width: 480px) {
+  .tabNav {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

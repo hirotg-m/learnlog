@@ -33,8 +33,9 @@ class MilestoneRecord:
     id: str
     qualification_id: str
     title: str
-    due_date: str | None
-    is_achieved: bool
+    planned_date: str | None
+    completed_date: str | None
+    status: str
     created_at: datetime
     updated_at: datetime
 

@@ -1,0 +1,34 @@
+.qualificationDetailPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.detailHeader {
+  display: grid;
+  gap: 6px;
+}
+
+.detailHeader h2.colorChip {
+  display: inline-block;
+  width: fit-content;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  color: #2b1705;
+}
+
+.detailStats {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.detailBody {
+  display: grid;
+  gap: 24px;
+}
+
+.detailBody > * + * {
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}

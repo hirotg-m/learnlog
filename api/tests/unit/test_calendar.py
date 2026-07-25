@@ -13,7 +13,7 @@ def test_calendar_month_and_day(client: TestClient) -> None:
             "name": "GitHub Copilot",
             "abbreviation": "GH-300",
             "color": "teal",
-            "status": "active",
+            "status": "open",
         },
     )
     qualification_id = qualification_response.json()["id"]

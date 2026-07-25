@@ -159,22 +159,27 @@ class DynamoDBStore:
             )
             return [self._study_log_from_item(item) for item in items]
 
-        # qualificationId 未指定: ByMonth を月ごとに Query する (docs/api-spec.md 10.2 参照)
+        if date_from is None or date_to is None:
+            # 資格・期間のどちらも未指定: 件数が少ない個人利用規模を前提に Scan を許容する
+            # (docs/api-spec.md 10.1 の qualifications と同じ方針)
+            items = self._study_logs.scan().get("Items", [])
+            records = [self._study_log_from_item(item) for item in items]
+            if date_from is not None:
+                records = [record for record in records if record.date >= date_from]
+            if date_to is not None:
+                records = [record for record in records if record.date <= date_to]
+            return records
+
+        # qualificationId 未指定・期間指定あり: ByMonth を月ごとに Query する (docs/api-spec.md 10.2 参照)
         items = self._query_by_month_range(date_from, date_to)
         records = [self._study_log_from_item(item) for item in items]
-        if date_from is not None:
-            records = [record for record in records if record.date >= date_from]
-        if date_to is not None:
-            records = [record for record in records if record.date <= date_to]
+        records = [record for record in records if record.date >= date_from]
+        records = [record for record in records if record.date <= date_to]
         return records
 
     def _query_by_month_range(
-        self, date_from: str | None, date_to: str | None
+        self, date_from: str, date_to: str
     ) -> list[dict[str, Any]]:
-        if date_from is None or date_to is None:
-            raise ValueError(
-                "qualificationId を指定しない場合、date_from と date_to が必須です"
-            )
         items: list[dict[str, Any]] = []
         for month in self._months_between(date_from, date_to):
             items.extend(
@@ -300,10 +305,8 @@ class DynamoDBStore:
         else:
             items = self._milestones.scan().get("Items", [])
         records = [self._milestone_from_item(item) for item in items]
-        if status == "achieved":
-            records = [record for record in records if record.is_achieved]
-        elif status == "unachieved":
-            records = [record for record in records if not record.is_achieved]
+        if status is not None:
+            records = [record for record in records if record.status == status]
         return records
 
     def create_milestone(
@@ -311,16 +314,18 @@ class DynamoDBStore:
         *,
         qualification_id: str,
         title: str,
-        due_date: str | None,
-        is_achieved: bool,
+        planned_date: str | None,
+        completed_date: str | None,
+        status: str,
         now: datetime,
     ) -> MilestoneRecord:
         record = MilestoneRecord(
             id=f"m_{uuid4().hex[:8]}",
             qualification_id=qualification_id,
             title=title,
-            due_date=due_date,
-            is_achieved=is_achieved,
+            planned_date=planned_date,
+            completed_date=completed_date,
+            status=status,
             created_at=now,
             updated_at=now,
         )
@@ -343,8 +348,9 @@ class DynamoDBStore:
             "id": record.id,
             "qualificationId": record.qualification_id,
             "title": record.title,
-            "dueDate": record.due_date,
-            "isAchieved": record.is_achieved,
+            "plannedDate": record.planned_date,
+            "completedDate": record.completed_date,
+            "status": record.status,
             "createdAt": to_iso_z(record.created_at),
             "updatedAt": to_iso_z(record.updated_at),
         }
@@ -355,8 +361,9 @@ class DynamoDBStore:
             id=item["id"],
             qualification_id=item["qualificationId"],
             title=item["title"],
-            due_date=item.get("dueDate"),
-            is_achieved=bool(item["isAchieved"]),
+            planned_date=item.get("plannedDate"),
+            completed_date=item.get("completedDate"),
+            status=item.get("status", "open"),
             created_at=parse_iso(item["createdAt"]),
             updated_at=parse_iso(item["updatedAt"]),
         )

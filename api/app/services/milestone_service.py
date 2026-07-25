@@ -25,14 +25,25 @@ class MilestoneService:
     def create(self, payload: MilestoneCreate) -> MilestoneOut:
         if self.store.get_qualification(payload.qualificationId) is None:
             raise HTTPException(status_code=404, detail="qualification not found")
-        if payload.dueDate is not None:
-            parse_date(payload.dueDate, field="dueDate")
+        if payload.plannedDate is not None:
+            parse_date(payload.plannedDate, field="plannedDate")
+        if payload.completedDate is not None:
+            parse_date(payload.completedDate, field="completedDate")
+
+        status = payload.status
+        completed_date = payload.completedDate
+        if completed_date is not None:
+            # 完了日が入力されている場合は状態を close にする
+            status = "close"
+        elif status == "close":
+            completed_date = today_in_app_timezone().isoformat()
 
         record = self.store.create_milestone(
             qualification_id=payload.qualificationId,
             title=payload.title,
-            due_date=payload.dueDate,
-            is_achieved=payload.isAchieved,
+            planned_date=payload.plannedDate,
+            completed_date=completed_date,
+            status=status,
             now=now_utc(),
         )
         return self._to_out(record)
@@ -48,11 +59,25 @@ class MilestoneService:
             record.qualification_id = payload.qualificationId
         if payload.title is not None:
             record.title = payload.title
-        if payload.dueDate is not None:
-            parse_date(payload.dueDate, field="dueDate")
-            record.due_date = payload.dueDate
-        if payload.isAchieved is not None:
-            record.is_achieved = payload.isAchieved
+        if payload.plannedDate is not None:
+            parse_date(payload.plannedDate, field="plannedDate")
+            record.planned_date = payload.plannedDate
+        if payload.completedDate is not None:
+            parse_date(payload.completedDate, field="completedDate")
+            record.completed_date = payload.completedDate
+            # 完了日が入力され、状態が明示指定されていない場合は close にする
+            if payload.status is None:
+                record.status = "close"
+        if payload.status is not None:
+            record.status = payload.status
+            # 完了日を明示指定していない場合、close への変更で完了日を今日に自動設定し、
+            # open への変更で完了日をクリアする
+            if payload.completedDate is None:
+                record.completed_date = (
+                    today_in_app_timezone().isoformat()
+                    if payload.status == "close"
+                    else None
+                )
 
         updated = self.store.update_milestone(record, now=now_utc())
         return self._to_out(updated)
@@ -69,12 +94,13 @@ class MilestoneService:
             id=record.id,
             qualificationId=record.qualification_id,
             title=record.title,
-            dueDate=record.due_date,
-            isAchieved=record.is_achieved,
+            plannedDate=record.planned_date,
+            completedDate=record.completed_date,
+            status=record.status,
             isOverdue=(
-                record.due_date is not None
-                and record.due_date < today
-                and not record.is_achieved
+                record.status == "open"
+                and record.planned_date is not None
+                and record.planned_date < today
             ),
             createdAt=to_iso_z(record.created_at),
             updatedAt=to_iso_z(record.updated_at),

@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap");
+
+:root {
+  font-family: "IBM Plex Sans JP", sans-serif;
+  color: #f4efe2;
+  background: #14100d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(255, 176, 89, 0.18), transparent 32%),
+    radial-gradient(circle at 10% 20%, rgba(77, 180, 173, 0.2), transparent 35%),
+    linear-gradient(145deg, #100d0b, #1f1914 50%, #16110d);
+}

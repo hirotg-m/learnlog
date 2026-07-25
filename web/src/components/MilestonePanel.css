@@ -1,0 +1,160 @@
+.milestonePanel {
+  display: grid;
+  gap: 14px;
+}
+
+.milestonePanel h3 {
+  margin: 0;
+}
+
+.milestoneForm {
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneForm input,
+.milestoneForm select,
+.milestoneForm button {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.milestoneForm button {
+  border: 0;
+  font-weight: 700;
+  color: #2b1705;
+  background: linear-gradient(90deg, #f08f56, #f1d04f);
+}
+
+.milestoneList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneList li {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.milestoneList .empty {
+  color: rgba(255, 255, 255, 0.6);
+  border-style: dashed;
+}
+
+.milestoneHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.milestoneHead strong {
+  font-size: 0.98rem;
+}
+
+.metaLine {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.92rem;
+}
+
+.badge {
+  border-radius: 999px;
+  border: 0;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.badge.pending {
+  color: #ffe2af;
+  background: rgba(239, 139, 87, 0.28);
+}
+
+.badge.achieved {
+  color: #c9f9cb;
+  background: rgba(71, 180, 102, 0.3);
+}
+
+.milestoneActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: #fff;
+}
+
+.linkButton.danger {
+  color: #f1a1a1;
+}
+
+.linkButton.danger:hover {
+  color: #ff6b6b;
+}
+
+.milestoneEditForm {
+  display: grid;
+  gap: 10px;
+}
+
+.milestoneEditForm input,
+.milestoneEditForm select {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.fieldLabel {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.milestoneEditActions {
+  display: flex;
+  gap: 8px;
+}
+
+.milestoneEditActions button {
+  height: 40px;
+  border-radius: 10px;
+  border: 0;
+  font-weight: 700;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.milestoneEditActions button[type="submit"] {
+  color: #2b1705;
+  background: linear-gradient(90deg, #f08f56, #f1d04f);
+}
+
+.milestoneEditActions button[type="button"] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
