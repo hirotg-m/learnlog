@@ -1,4 +1,4 @@
-export type QualificationStatus = "active" | "closed";
+export type QualificationStatus = "open" | "close";
 
 export type Qualification = {
   id: string;
@@ -11,7 +11,6 @@ export type Qualification = {
   totalHours: number | null;
   studyLogCount: number | null;
   lastStudiedAt: string | null;
-  overdueMilestoneCount: number | null;
 };
 
 export type StudyLog = {
@@ -25,12 +24,15 @@ export type StudyLog = {
   updatedAt: string;
 };
 
+export type MilestoneStatus = "open" | "close";
+
 export type Milestone = {
   id: string;
   qualificationId: string;
   title: string;
-  dueDate: string | null;
-  isAchieved: boolean;
+  plannedDate: string | null;
+  completedDate: string | null;
+  status: MilestoneStatus;
   isOverdue: boolean;
   createdAt: string;
   updatedAt: string;

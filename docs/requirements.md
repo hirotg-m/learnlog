@@ -77,9 +77,9 @@
 | マイルストーン管理 | マイルストーンの追加・編集・達成管理 |
 
 ## データモデル(概要)
-- 資格(Qualification): id, name, abbreviation(任意), color(プリセットパレットから選択), status(active / closed)
+- 資格(Qualification): id, name, abbreviation(任意), color(プリセットパレットから選択), status(open / close)
 - 学習記録(StudyLog): id, qualificationId, date, createdAt(同日複数セッションの並び順用), hours, content, memo
-- マイルストーン(Milestone): id, qualificationId, title, dueDate(任意), isAchieved
+- マイルストーン(Milestone): id, qualificationId, title, plannedDate(任意), completedDate(任意), status(open / close)
 
 ## 対象外(Non-goals)
 - マルチユーザー対応(PIN は 1 つのみ、ユーザー登録なし)

@@ -176,10 +176,8 @@ class MemoryStore:
             records = [
                 item for item in records if item.qualification_id == qualification_id
             ]
-        if status == "achieved":
-            records = [item for item in records if item.is_achieved]
-        elif status == "unachieved":
-            records = [item for item in records if not item.is_achieved]
+        if status is not None:
+            records = [item for item in records if item.status == status]
         return records
 
     def create_milestone(
@@ -187,16 +185,18 @@ class MemoryStore:
         *,
         qualification_id: str,
         title: str,
-        due_date: str | None,
-        is_achieved: bool,
+        planned_date: str | None,
+        completed_date: str | None,
+        status: str,
         now: datetime,
     ) -> MilestoneRecord:
         record = MilestoneRecord(
             id=f"m_{uuid4().hex[:8]}",
             qualification_id=qualification_id,
             title=title,
-            due_date=due_date,
-            is_achieved=is_achieved,
+            planned_date=planned_date,
+            completed_date=completed_date,
+            status=status,
             created_at=now,
             updated_at=now,
         )

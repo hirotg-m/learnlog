@@ -16,7 +16,7 @@ NOW = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
 
 def _create_qualification(store: DynamoDBStore, *, name: str = "AWS SAP") -> str:
     record = store.create_qualification(
-        name=name, abbreviation=None, color="blue", status="active", now=NOW
+        name=name, abbreviation=None, color="blue", status="open", now=NOW
     )
     return record.id
 
@@ -32,7 +32,7 @@ def test_qualification_crud_roundtrip(dynamodb_store: DynamoDBStore) -> None:
     updated = dynamodb_store.update_qualification(fetched, now=NOW)
     assert updated.name == "AWS SAP 更新"
 
-    listed = dynamodb_store.list_qualifications(status="active")
+    listed = dynamodb_store.list_qualifications(status="open")
     assert [item.id for item in listed] == [qualification_id]
 
     dynamodb_store.delete_qualification(qualification_id)
@@ -78,6 +78,31 @@ def test_study_log_by_qualification_gsi_filters_by_date_range(
     )
 
     assert [item.content for item in result] == ["b"]
+
+
+def test_study_log_list_without_qualification_or_date_range_falls_back_to_scan(
+    dynamodb_store: DynamoDBStore,
+) -> None:
+    """qualificationId・期間のいずれも指定しない呼び出し(フロントエンドの一覧画面が使う)は、
+    ByMonth GSI のQueryが使えないため全件Scanにフォールバックする必要がある。
+    フォールバックがないと ValueError で 500 になる。
+    """
+    qualification_id = _create_qualification(dynamodb_store)
+    dynamodb_store.create_study_log(
+        qualification_id=qualification_id,
+        date="2026-07-24",
+        month="2026-07",
+        hours=1.0,
+        content="a",
+        memo=None,
+        now=NOW,
+    )
+
+    result = dynamodb_store.list_study_logs(
+        qualification_id=None, date_from=None, date_to=None
+    )
+
+    assert [item.content for item in result] == ["a"]
 
 
 def test_calendar_month_aggregation_uses_by_month_gsi(
@@ -162,15 +187,17 @@ def test_milestone_by_qualification_gsi(dynamodb_store: DynamoDBStore) -> None:
     dynamodb_store.create_milestone(
         qualification_id=qualification_id,
         title="模試 80 点",
-        due_date="2026-08-01",
-        is_achieved=False,
+        planned_date="2026-08-01",
+        completed_date=None,
+        status="open",
         now=NOW,
     )
     dynamodb_store.create_milestone(
         qualification_id=other_id,
         title="別資格の目標",
-        due_date=None,
-        is_achieved=False,
+        planned_date=None,
+        completed_date=None,
+        status="open",
         now=NOW,
     )
 

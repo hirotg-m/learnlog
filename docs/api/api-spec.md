@@ -118,7 +118,7 @@
 
 | パラメータ | 説明 |
 |---|---|
-| status | `active` または `closed` を絞り込み可能 |
+| status | `open` または `close` を絞り込み可能 |
 | includeStats | `true` の場合は学習時間などの集計を含める |
 
 レスポンス 200:
@@ -131,11 +131,10 @@
       "name": "AWS ソリューションアーキテクトプロフェッショナル",
       "abbreviation": "AWS SAP",
       "color": "blue",
-      "status": "active",
+      "status": "open",
       "totalHours": 32.5,
       "studyLogCount": 18,
       "lastStudiedAt": "2026-07-24T12:00:00Z",
-      "overdueMilestoneCount": 1,
       "createdAt": "2026-07-01T10:00:00Z",
       "updatedAt": "2026-07-20T08:00:00Z"
     }
@@ -143,7 +142,7 @@
 }
 ```
 
-上記は `includeStats=true` の場合の例。`totalHours` / `studyLogCount` / `lastStudiedAt` / `overdueMilestoneCount` は `includeStats=true` のときのみ含め、指定なしの場合はこれらのフィールド自体を返さない。
+上記は `includeStats=true` の場合の例。`totalHours` / `studyLogCount` / `lastStudiedAt` は `includeStats=true` のときのみ含め、指定なしの場合はこれらのフィールド自体を返さない。
 
 ### 5.2 資格作成
 
@@ -156,7 +155,7 @@
   "name": "GitHub Copilot",
   "abbreviation": "GH-300",
   "color": "green",
-  "status": "active"
+  "status": "open"
 }
 ```
 
@@ -164,7 +163,7 @@
 
 - `name` は必須
 - `color` は 10 色のプリセットから選択する。資格間での重複は許可する(一意性は保証しない)
-- `status` は `active` か `closed`
+- `status` は `open` か `close`
 - `abbreviation` は任意
 
 ### 5.3 資格詳細取得
@@ -277,7 +276,7 @@
 | パラメータ | 説明 |
 |---|---|
 | qualificationId | 資格で絞り込み |
-| status | `achieved` / `unachieved` を想定 |
+| status | `open` / `close` |
 
 レスポンス 200:
 
@@ -288,8 +287,9 @@
       "id": "m_001",
       "qualificationId": "q_001",
       "title": "模擬試験 1 回目で 80 点以上",
-      "dueDate": "2026-08-31",
-      "isAchieved": false,
+      "plannedDate": "2026-08-31",
+      "completedDate": null,
+      "status": "open",
       "isOverdue": true,
       "createdAt": "2026-07-10T09:00:00Z",
       "updatedAt": "2026-07-20T09:00:00Z"
@@ -308,16 +308,17 @@
 {
   "qualificationId": "q_001",
   "title": "模擬試験 1 回目で 80 点以上",
-  "dueDate": "2026-08-31",
-  "isAchieved": false
+  "plannedDate": "2026-08-31"
 }
 ```
+
+`status` は省略時 `open`。`completedDate` は省略可(`status` を `close` に更新した際、明示指定がなければ当日の日付が自動設定される)。
 
 ### 7.3 マイルストーン更新
 
 `PATCH /milestones/{milestoneId}`
 
-更新可能項目は `qualificationId`, `title`, `dueDate`, `isAchieved` とする。
+更新可能項目は `qualificationId`, `title`, `plannedDate`, `completedDate`, `status` とする。`status` を `close` に変更し `completedDate` を指定しなかった場合は当日の日付が自動設定され、`open` に戻した場合は `completedDate` が自動的にクリアされる。
 
 ### 7.4 マイルストーン削除
 
@@ -394,7 +395,7 @@
 | name | string | yes | 資格名 |
 | abbreviation | string | no | 略称 |
 | color | string | yes | 10 色パレットの識別子。他の資格との重複可 |
-| status | string | yes | `active` / `closed` |
+| status | string | yes | `open` / `close` |
 | createdAt | string | yes | 作成日時 |
 | updatedAt | string | yes | 更新日時 |
 
@@ -418,8 +419,10 @@
 | id | string | yes | 識別子 |
 | qualificationId | string | yes | 紐づく資格。1 資格に対して複数のマイルストーンを持つ |
 | title | string | yes | 目標名 |
-| dueDate | string | no | 期限 |
-| isAchieved | boolean | yes | 達成済みか |
+| plannedDate | string | no | 計画日 |
+| completedDate | string | no | 完了日。`status` を `close` に更新した際、未指定なら当日の日付が自動設定される |
+| status | string | yes | `open` / `close` |
+| isOverdue | boolean | yes | `status` が `open` かつ `plannedDate` が過去の場合 `true` |
 | createdAt | string | yes | 作成日時 |
 | updatedAt | string | yes | 更新日時 |
 
@@ -469,10 +472,10 @@
 
 ### 10.6 集計値の扱い
 
-`totalHours` / `studyLogCount` / `lastStudiedAt` / `overdueMilestoneCount`(5.1, 7.1)は、`learnlog-qualifications` に非正規化カウンタとして持たず、`learnlog-study-logs` / `learnlog-milestones` の `ByQualification` GSI への Query 結果からその都度計算する。個人利用規模のデータ量であれば、書き込みのたびにカウンタを更新する方式(競合対策が必要)より単純で安全なため。
+`totalHours` / `studyLogCount` / `lastStudiedAt`(5.1)は、`learnlog-qualifications` に非正規化カウンタとして持たず、`learnlog-study-logs` の `ByQualification` GSI への Query 結果からその都度計算する。個人利用規模のデータ量であれば、書き込みのたびにカウンタを更新する方式(競合対策が必要)より単純で安全なため。
 
 ## 11. 実装メモ
 
 - 資格削除は関連レコードの一括削除を前提にする
-- `status=closed` の資格は新規作成フォームの候補から除外するが、参照系 API では返す
+- `status=close` の資格は学習記録の追加フォームを非表示にする(API側は `POST /study-logs` を 400 で拒否する)が、参照系 API では引き続き返す
 - マイルストーンの期限超過判定は API 側で `isOverdue` を付与して返す

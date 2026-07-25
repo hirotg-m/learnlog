@@ -39,6 +39,27 @@
   color: #2b1705;
   font-weight: 700;
   border: 0;
+  cursor: pointer;
+}
+
+.qualificationForm button.secondaryButton {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.addToggleButton {
+  height: 44px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.3);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addToggleButton:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
 }
 
 .qualificationList {
@@ -56,6 +77,15 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.qualificationList li.selectable {
+  cursor: pointer;
+}
+
+.qualificationList li.isSelected {
+  border-color: #f3af4b;
+  background: rgba(243, 175, 75, 0.12);
+}
+
 .titleLine {
   margin: 0;
   display: flex;
@@ -63,22 +93,107 @@
   align-items: center;
 }
 
-.titleLine span {
+.titleLine button {
   font-size: 0.8rem;
   padding: 2px 8px;
   border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  font-weight: 700;
 }
 
-.titleLine .active {
+.titleLine .open {
   background: rgba(81, 216, 131, 0.25);
 }
 
-.titleLine .closed {
+.titleLine .close {
   background: rgba(170, 180, 195, 0.25);
+}
+
+.colorChip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: #2b1705;
+  font-weight: 700;
+}
+
+p.colorChip {
+  margin: 4px 0 0;
+  color: #2b1705;
+  font-weight: 600;
 }
 
 .nameLine,
 .statsLine {
   margin: 4px 0 0;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.qualificationActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.linkButton:hover {
+  color: #fff;
+}
+
+.linkButton.danger {
+  color: #f1a1a1;
+}
+
+.linkButton.danger:hover {
+  color: #ff6b6b;
+}
+
+.qualificationEditForm {
+  display: grid;
+  gap: 10px;
+}
+
+.qualificationEditForm input,
+.qualificationEditForm select {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  padding: 0 10px;
+}
+
+.qualificationEditActions {
+  display: flex;
+  gap: 8px;
+}
+
+.qualificationEditActions button {
+  height: 40px;
+  border-radius: 10px;
+  border: 0;
+  font-weight: 700;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.qualificationEditActions button[type="submit"] {
+  color: #2b1705;
+  background: linear-gradient(90deg, #3cab9e, #f3af4b);
+}
+
+.qualificationEditActions button[type="button"] {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }

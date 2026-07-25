@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CalendarPanel } from "./components/CalendarPanel";
-import { MilestonePanel } from "./components/MilestonePanel";
 import { PinLogin } from "./components/PinLogin";
-import { QualificationPanel } from "./components/QualificationPanel";
-import { StudyLogPanel } from "./components/StudyLogPanel";
+import { QualificationsView } from "./components/QualificationsView";
 import { TabNav, type TabKey } from "./components/TabNav";
 import { apiClient } from "./lib/apiClient";
 import type { Qualification } from "./types/api";
@@ -16,11 +14,6 @@ export function App(): JSX.Element {
   const [activeTab, setActiveTab] = useState<TabKey>("calendar");
   const [qualifications, setQualifications] = useState<Qualification[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  const activeQualifications = useMemo(
-    () => qualifications.filter((item) => item.status === "active"),
-    [qualifications]
-  );
 
   async function refreshQualifications(): Promise<void> {
     setError(null);
@@ -82,14 +75,14 @@ export function App(): JSX.Element {
   return (
     <main className="appShell">
       <header className="appTop">
-        <div>
-          <p className="appEyebrow">LEARNLOG</p>
+        <p className="appEyebrow">LEARNLOG</p>
+        <div className="appTitleRow">
           <h1>Study Dashboard</h1>
-          <p className="appSub">学習を記録して、積み上げを可視化する</p>
+          <button type="button" className="logoutButton" onClick={() => void handleLogout()}>
+            ログアウト
+          </button>
         </div>
-        <button type="button" className="logoutButton" onClick={() => void handleLogout()}>
-          ログアウト
-        </button>
+        <p className="appSub">学習を記録して、積み上げを可視化する</p>
       </header>
 
       <TabNav current={activeTab} onChange={setActiveTab} />
@@ -98,22 +91,7 @@ export function App(): JSX.Element {
 
       {activeTab === "calendar" && <CalendarPanel />}
       {activeTab === "qualifications" && (
-        <QualificationPanel
-          qualifications={qualifications}
-          onRefresh={refreshQualifications}
-        />
-      )}
-      {activeTab === "study" && (
-        <StudyLogPanel
-          qualifications={qualifications}
-          onCreated={refreshQualifications}
-        />
-      )}
-      {activeTab === "milestones" && (
-        <MilestonePanel
-          qualifications={activeQualifications}
-          onChanged={refreshQualifications}
-        />
+        <QualificationsView qualifications={qualifications} onRefresh={refreshQualifications} />
       )}
     </main>
   );

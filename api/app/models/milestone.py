@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel
+
+MilestoneStatus = Literal["open", "close"]
 
 
 class MilestoneBase(BaseModel):
     qualificationId: str
     title: str
-    dueDate: str | None = None
-    isAchieved: bool = False
+    plannedDate: str | None = None
+    completedDate: str | None = None
+    status: MilestoneStatus = "open"
 
 
 class MilestoneCreate(MilestoneBase):
@@ -17,8 +22,9 @@ class MilestoneCreate(MilestoneBase):
 class MilestoneUpdate(BaseModel):
     qualificationId: str | None = None
     title: str | None = None
-    dueDate: str | None = None
-    isAchieved: bool | None = None
+    plannedDate: str | None = None
+    completedDate: str | None = None
+    status: MilestoneStatus | None = None
 
 
 class MilestoneOut(MilestoneBase):

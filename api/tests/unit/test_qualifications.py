@@ -10,7 +10,7 @@ def _create_qualification(client: TestClient, **overrides: object) -> dict:
         "name": "AWS SAP",
         "abbreviation": "SAP",
         "color": "blue",
-        "status": "active",
+        "status": "open",
     }
     payload.update(overrides)
     response = client.post("/api/v1/qualifications", json=payload)
@@ -28,7 +28,7 @@ def test_create_and_get_qualification(client: TestClient) -> None:
     assert body["name"] == "AWS SAP"
     assert body["abbreviation"] == "SAP"
     assert body["color"] == "blue"
-    assert body["status"] == "active"
+    assert body["status"] == "open"
 
 
 def test_create_qualification_invalid_color_returns_422(client: TestClient) -> None:
@@ -39,7 +39,7 @@ def test_create_qualification_invalid_color_returns_422(client: TestClient) -> N
             "name": "GitHub Copilot",
             "abbreviation": None,
             "color": "purple",
-            "status": "active",
+            "status": "open",
         },
     )
     assert response.status_code == 422
@@ -61,10 +61,10 @@ def test_create_qualification_invalid_status_returns_422(client: TestClient) -> 
 
 def test_list_filters_by_status(client: TestClient) -> None:
     login(client)
-    _create_qualification(client, name="AWS SAP", status="active")
-    _create_qualification(client, name="情報処理安全確保支援士", status="closed")
+    _create_qualification(client, name="AWS SAP", status="open")
+    _create_qualification(client, name="情報処理安全確保支援士", status="close")
 
-    response = client.get("/api/v1/qualifications", params={"status": "closed"})
+    response = client.get("/api/v1/qualifications", params={"status": "close"})
     assert response.status_code == 200
     items = response.json()["items"]
     assert [item["name"] for item in items] == ["情報処理安全確保支援士"]
@@ -85,20 +85,10 @@ def test_list_include_stats(client: TestClient) -> None:
             "memo": None,
         },
     )
-    client.post(
-        "/api/v1/milestones",
-        json={
-            "qualificationId": qualification_id,
-            "title": "模試 80 点",
-            "dueDate": "2020-01-01",
-            "isAchieved": False,
-        },
-    )
 
     without_stats = client.get("/api/v1/qualifications").json()["items"][0]
     assert without_stats["totalHours"] is None
     assert without_stats["studyLogCount"] is None
-    assert without_stats["overdueMilestoneCount"] is None
 
     with_stats = client.get(
         "/api/v1/qualifications", params={"includeStats": True}
@@ -106,7 +96,6 @@ def test_list_include_stats(client: TestClient) -> None:
     assert with_stats["totalHours"] == 1.5
     assert with_stats["studyLogCount"] == 1
     assert with_stats["lastStudiedAt"] is not None
-    assert with_stats["overdueMilestoneCount"] == 1
 
 
 def test_update_qualification(client: TestClient) -> None:
@@ -115,13 +104,13 @@ def test_update_qualification(client: TestClient) -> None:
 
     response = client.patch(
         f"/api/v1/qualifications/{qualification['id']}",
-        json={"name": "AWS SAP 更新", "color": "green", "status": "closed"},
+        json={"name": "AWS SAP 更新", "color": "green", "status": "close"},
     )
     assert response.status_code == 200
     body = response.json()
     assert body["name"] == "AWS SAP 更新"
     assert body["color"] == "green"
-    assert body["status"] == "closed"
+    assert body["status"] == "close"
 
 
 def test_update_qualification_not_found_returns_404(client: TestClient) -> None:
@@ -154,8 +143,6 @@ def test_delete_qualification_cascades_study_logs_and_milestones(
         json={
             "qualificationId": qualification_id,
             "title": "目標",
-            "dueDate": None,
-            "isAchieved": False,
         },
     )
 
@@ -174,7 +161,7 @@ def test_delete_qualification_cascades_study_logs_and_milestones(
 
 def test_closed_qualification_blocks_new_study_log(client: TestClient) -> None:
     login(client)
-    qualification = _create_qualification(client, status="closed")
+    qualification = _create_qualification(client, status="close")
 
     response = client.post(
         "/api/v1/study-logs",

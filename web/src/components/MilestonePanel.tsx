@@ -5,7 +5,7 @@ import type { Milestone, Qualification } from "../types/api";
 import "./MilestonePanel.css";
 
 type MilestonePanelProps = {
-  qualifications: Qualification[];
+  qualification: Qualification;
   onChanged: () => Promise<void>;
 };
 
@@ -17,25 +17,24 @@ function toDateInputValue(value: string | null): string {
 }
 
 export function MilestonePanel(props: MilestonePanelProps): JSX.Element {
-  const [qualificationId, setQualificationId] = useState("");
+  const { qualification } = props;
+
   const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [plannedDate, setPlannedDate] = useState("");
   const [items, setItems] = useState<Milestone[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const hasQualifications = props.qualifications.length > 0;
-
-  useEffect(() => {
-    if (!qualificationId && props.qualifications.length > 0) {
-      setQualificationId(props.qualifications[0].id);
-    }
-  }, [qualificationId, props.qualifications]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editPlannedDate, setEditPlannedDate] = useState("");
+  const [editCompletedDate, setEditCompletedDate] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   async function reload(): Promise<void> {
     setError(null);
     try {
-      const result = await apiClient.listMilestones(qualificationId || undefined);
+      const result = await apiClient.listMilestones(qualification.id);
       setItems(result.items);
     } catch (errorValue) {
       setError(apiClient.errorMessage(errorValue));
@@ -44,44 +43,39 @@ export function MilestonePanel(props: MilestonePanelProps): JSX.Element {
 
   useEffect(() => {
     void reload();
-  }, [qualificationId]);
+  }, [qualification.id]);
 
   const sortedItems = useMemo(() => {
     return [...items].sort((left, right) => {
-      if (left.isAchieved !== right.isAchieved) {
-        return left.isAchieved ? 1 : -1;
+      if (left.status !== right.status) {
+        return left.status === "close" ? 1 : -1;
       }
-      if (!left.dueDate && !right.dueDate) {
+      if (!left.plannedDate && !right.plannedDate) {
         return 0;
       }
-      if (!left.dueDate) {
+      if (!left.plannedDate) {
         return 1;
       }
-      if (!right.dueDate) {
+      if (!right.plannedDate) {
         return -1;
       }
-      return left.dueDate.localeCompare(right.dueDate);
+      return left.plannedDate.localeCompare(right.plannedDate);
     });
   }, [items]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!qualificationId) {
-      setError("資格を選択してください");
-      return;
-    }
     setError(null);
     setSaving(true);
 
     try {
       await apiClient.createMilestone({
-        qualificationId,
+        qualificationId: qualification.id,
         title,
-        dueDate: dueDate === "" ? null : dueDate,
-        isAchieved: false,
+        plannedDate: plannedDate === "" ? null : plannedDate,
       });
       setTitle("");
-      setDueDate("");
+      setPlannedDate("");
       await reload();
       await props.onChanged();
     } catch (errorValue) {
@@ -91,11 +85,11 @@ export function MilestonePanel(props: MilestonePanelProps): JSX.Element {
     }
   }
 
-  async function toggleAchieved(item: Milestone): Promise<void> {
+  async function toggleStatus(item: Milestone): Promise<void> {
     setError(null);
     try {
       await apiClient.updateMilestone(item.id, {
-        isAchieved: !item.isAchieved,
+        status: item.status === "close" ? "open" : "close",
       });
       await reload();
       await props.onChanged();
@@ -104,31 +98,64 @@ export function MilestonePanel(props: MilestonePanelProps): JSX.Element {
     }
   }
 
-  function getQualificationLabel(targetId: string): string {
-    const found = props.qualifications.find((item) => item.id === targetId);
-    if (!found) {
-      return "不明な資格";
+  function startEdit(item: Milestone): void {
+    setError(null);
+    setEditingId(item.id);
+    setEditTitle(item.title);
+    setEditPlannedDate(toDateInputValue(item.plannedDate));
+    setEditCompletedDate(toDateInputValue(item.completedDate));
+  }
+
+  function cancelEdit(): void {
+    setEditingId(null);
+  }
+
+  async function submitEdit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (!editingId) {
+      return;
     }
-    return found.abbreviation ?? found.name;
+    setError(null);
+    setEditSaving(true);
+
+    try {
+      await apiClient.updateMilestone(editingId, {
+        title: editTitle,
+        plannedDate: editPlannedDate === "" ? null : editPlannedDate,
+        completedDate: editCompletedDate === "" ? null : editCompletedDate,
+      });
+      setEditingId(null);
+      await reload();
+      await props.onChanged();
+    } catch (errorValue) {
+      setError(apiClient.errorMessage(errorValue));
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function deleteMilestone(item: Milestone): Promise<void> {
+    if (!window.confirm(`「${item.title}」を削除しますか？`)) {
+      return;
+    }
+    setError(null);
+    try {
+      await apiClient.deleteMilestone(item.id);
+      if (editingId === item.id) {
+        setEditingId(null);
+      }
+      await reload();
+      await props.onChanged();
+    } catch (errorValue) {
+      setError(apiClient.errorMessage(errorValue));
+    }
   }
 
   return (
-    <section className="panel milestonePanel">
-      <h2>マイルストーン管理</h2>
+    <section className="milestonePanel">
+      <h3>マイルストーン</h3>
 
       <form className="milestoneForm" onSubmit={onSubmit}>
-        <select
-          value={qualificationId}
-          onChange={(event) => setQualificationId(event.target.value)}
-          required
-          disabled={!hasQualifications}
-        >
-          {props.qualifications.map((qualification) => (
-            <option key={qualification.id} value={qualification.id}>
-              {qualification.abbreviation ?? qualification.name}
-            </option>
-          ))}
-        </select>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -137,40 +164,86 @@ export function MilestonePanel(props: MilestonePanelProps): JSX.Element {
         />
         <input
           type="date"
-          value={dueDate}
-          onChange={(event) => setDueDate(event.target.value)}
+          value={plannedDate}
+          onChange={(event) => setPlannedDate(event.target.value)}
         />
-        <button type="submit" disabled={saving || !hasQualifications}>
+        <button type="submit" disabled={saving}>
           {saving ? "保存中..." : "マイルストーンを追加"}
         </button>
       </form>
 
-      {!hasQualifications && (
-        <p className="hintText">学習中の資格がありません。資格タブから追加してください。</p>
-      )}
-
       {error && <p className="errorText">{error}</p>}
 
       <ul className="milestoneList">
-        {sortedItems.map((item) => (
-          <li key={item.id}>
-            <div className="milestoneHead">
-              <strong>{item.title}</strong>
-              <button
-                type="button"
-                className={item.isAchieved ? "badge achieved" : "badge pending"}
-                onClick={() => void toggleAchieved(item)}
-              >
-                {item.isAchieved ? "達成" : "未達成"}
-              </button>
-            </div>
-            <p className="metaLine">
-              {getQualificationLabel(item.qualificationId)}
-              {item.dueDate ? ` / 期限 ${toDateInputValue(item.dueDate)}` : " / 期限なし"}
-              {item.isOverdue && !item.isAchieved ? " / 期限超過" : ""}
-            </p>
-          </li>
-        ))}
+        {sortedItems.length === 0 && <li className="empty">まだマイルストーンがありません。</li>}
+        {sortedItems.map((item) =>
+          editingId === item.id ? (
+            <li key={item.id}>
+              <form className="milestoneEditForm" onSubmit={submitEdit}>
+                <input
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value)}
+                  placeholder="目標タイトル"
+                  required
+                />
+                <label className="fieldLabel">
+                  計画日
+                  <input
+                    type="date"
+                    value={editPlannedDate}
+                    onChange={(event) => setEditPlannedDate(event.target.value)}
+                  />
+                </label>
+                <label className="fieldLabel">
+                  完了日
+                  <input
+                    type="date"
+                    value={editCompletedDate}
+                    onChange={(event) => setEditCompletedDate(event.target.value)}
+                  />
+                </label>
+                <div className="milestoneEditActions">
+                  <button type="submit" disabled={editSaving}>
+                    {editSaving ? "保存中..." : "保存"}
+                  </button>
+                  <button type="button" onClick={cancelEdit} disabled={editSaving}>
+                    キャンセル
+                  </button>
+                </div>
+              </form>
+            </li>
+          ) : (
+            <li key={item.id}>
+              <div className="milestoneHead">
+                <strong>{item.title}</strong>
+                <button
+                  type="button"
+                  className={item.status === "close" ? "badge achieved" : "badge pending"}
+                  onClick={() => void toggleStatus(item)}
+                >
+                  {item.status === "close" ? "完了" : "未完了"}
+                </button>
+              </div>
+              <p className="metaLine">
+                {item.plannedDate ? `計画日 ${toDateInputValue(item.plannedDate)}` : "計画日なし"}
+                {item.completedDate ? ` / 完了日 ${toDateInputValue(item.completedDate)}` : ""}
+                {item.isOverdue ? " / 期限超過" : ""}
+              </p>
+              <div className="milestoneActions">
+                <button type="button" className="linkButton" onClick={() => startEdit(item)}>
+                  編集
+                </button>
+                <button
+                  type="button"
+                  className="linkButton danger"
+                  onClick={() => void deleteMilestone(item)}
+                >
+                  削除
+                </button>
+              </div>
+            </li>
+          )
+        )}
       </ul>
     </section>
   );

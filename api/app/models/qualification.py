@@ -4,14 +4,14 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-QualificationStatus = Literal["active", "closed"]
+QualificationStatus = Literal["open", "close"]
 
 
 class QualificationBase(BaseModel):
     name: str
     abbreviation: str | None = None
     color: str
-    status: QualificationStatus = "active"
+    status: QualificationStatus = "open"
 
 
 class QualificationCreate(QualificationBase):
@@ -32,7 +32,6 @@ class QualificationOut(QualificationBase):
     totalHours: float | None = None
     studyLogCount: int | None = None
     lastStudiedAt: str | None = None
-    overdueMilestoneCount: int | None = None
 
 
 class QualificationListResponse(BaseModel):

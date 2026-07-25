@@ -135,7 +135,7 @@ def test_full_qualification_and_study_log_flow(live_api_base_url: str) -> None:
                 "name": "AWS SAP",
                 "abbreviation": "SAP",
                 "color": "blue",
-                "status": "active",
+                "status": "open",
             },
         )
         assert create_response.status_code == 201

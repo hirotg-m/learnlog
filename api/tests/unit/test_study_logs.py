@@ -13,7 +13,7 @@ def test_study_log_hours_validation(client: TestClient) -> None:
             "name": "AWS SAP",
             "abbreviation": "SAP",
             "color": "blue",
-            "status": "active",
+            "status": "open",
         },
     )
     qualification_id = qualification_response.json()["id"]
@@ -39,7 +39,7 @@ def test_study_logs_sort_by_date_and_created_at(client: TestClient) -> None:
             "name": "GitHub Actions",
             "abbreviation": "GHA",
             "color": "green",
-            "status": "active",
+            "status": "open",
         },
     )
     qualification_id = qualification_response.json()["id"]
@@ -76,7 +76,7 @@ def _create_qualification(client: TestClient, **overrides: object) -> dict:
         "name": "AWS SAP",
         "abbreviation": "SAP",
         "color": "blue",
-        "status": "active",
+        "status": "open",
     }
     payload.update(overrides)
     return client.post("/api/v1/qualifications", json=payload).json()

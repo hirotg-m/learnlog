@@ -19,13 +19,15 @@ def login(
 ) -> LoginResponse:
     result = service.login(payload.pin)
     secure_cookie = os.getenv("COOKIE_SECURE", "true").lower() == "true"
+    # SameSite=None はブラウザの仕様上 Secure と併用しないと Cookie が保存されない。
+    # COOKIE_SECURE=false (HTTPでのローカル/開発用途) のときは Lax にフォールバックする
     response.set_cookie(
         key="session_token",
         value=result.token,
         max_age=result.max_age,
         httponly=True,
         secure=secure_cookie,
-        samesite="none",
+        samesite="none" if secure_cookie else "lax",
     )
     return LoginResponse(session=SessionInfo(expiresAt=result.expires_at))
 
@@ -35,12 +37,11 @@ def session_check(expires_at: str = Depends(require_session)) -> SessionResponse
     return SessionResponse(authenticated=True, expiresAt=expires_at)
 
 
-@router.post("/logout", status_code=204)
+@router.post("/logout", status_code=204, response_model=None)
 def logout(
     response: Response,
     service: AuthService = Depends(get_auth_service),
     session_token: str | None = Cookie(default=None),
-) -> Response:
+) -> None:
     service.logout(session_token)
     response.delete_cookie("session_token")
-    return response

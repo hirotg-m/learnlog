@@ -9,7 +9,7 @@ from app.models.qualification import (
 )
 from app.repositories.base import Store
 from app.repositories.records import QualificationRecord
-from app.utils.time import now_utc, to_iso_z, today_in_app_timezone
+from app.utils.time import now_utc, to_iso_z
 
 COLOR_PALETTE = {
     "red",
@@ -39,7 +39,7 @@ class QualificationService:
 
     def create(self, payload: QualificationCreate) -> QualificationOut:
         self._validate_color(payload.color)
-        if payload.status not in {"active", "closed"}:
+        if payload.status not in {"open", "close"}:
             raise HTTPException(status_code=422, detail="invalid status")
         record = self.store.create_qualification(
             name=payload.name,
@@ -94,23 +94,12 @@ class QualificationService:
         total_hours: float | None = None
         study_log_count: int | None = None
         last_studied_at: str | None = None
-        overdue_count: int | None = None
         if include_stats:
             target_logs = self.store.list_study_logs(qualification_id=record.id)
             total_hours = round(sum(item.hours for item in target_logs), 2)
             study_log_count = len(target_logs)
             if target_logs:
                 last_studied_at = to_iso_z(max(item.created_at for item in target_logs))
-            today = today_in_app_timezone().isoformat()
-            overdue_count = len(
-                [
-                    item
-                    for item in self.store.list_milestones(qualification_id=record.id)
-                    if item.due_date is not None
-                    and item.due_date < today
-                    and not item.is_achieved
-                ]
-            )
 
         return QualificationOut(
             id=record.id,
@@ -123,5 +112,4 @@ class QualificationService:
             totalHours=total_hours,
             studyLogCount=study_log_count,
             lastStudiedAt=last_studied_at,
-            overdueMilestoneCount=overdue_count,
         )

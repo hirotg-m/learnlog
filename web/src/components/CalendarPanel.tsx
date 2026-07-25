@@ -1,23 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { apiClient } from "../lib/apiClient";
+import { getQualificationColor } from "../lib/colors";
 import type { CalendarDayDetail, CalendarMonth } from "../types/api";
+import { MonthlyHoursChart } from "./MonthlyHoursChart";
 import "./CalendarPanel.css";
 
 const weekLabels = ["日", "月", "火", "水", "木", "金", "土"];
-
-const colorMap: Record<string, string> = {
-  red: "#ef6060",
-  orange: "#f5a445",
-  yellow: "#f0d64c",
-  green: "#67c46c",
-  teal: "#2fbbad",
-  blue: "#4f86f7",
-  indigo: "#7476ef",
-  pink: "#f07ecf",
-  brown: "#a37a4f",
-  gray: "#a5adb8",
-};
 
 function pad2(value: number): string {
   return value.toString().padStart(2, "0");
@@ -110,7 +99,7 @@ export function CalendarPanel(): JSX.Element {
                 {items.slice(0, 4).map((item) => (
                   <i
                     key={`${date}-${item.qualificationId}`}
-                    style={{ backgroundColor: colorMap[item.color] ?? "#ddd" }}
+                    style={{ backgroundColor: getQualificationColor(item.color) }}
                   />
                 ))}
               </div>
@@ -129,7 +118,7 @@ export function CalendarPanel(): JSX.Element {
               <p className="detailHead">
                 <span
                   className="colorDot"
-                  style={{ backgroundColor: colorMap[item.color] ?? "#ddd" }}
+                  style={{ backgroundColor: getQualificationColor(item.color) }}
                 />
                 {item.abbreviation ?? item.qualificationName} / {item.hours}h
               </p>
@@ -139,6 +128,8 @@ export function CalendarPanel(): JSX.Element {
           ))}
         </ul>
       </section>
+
+      <MonthlyHoursChart monthData={monthData} />
     </section>
   );
 }
