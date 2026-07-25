@@ -44,6 +44,6 @@ jobs:
       - run: pip install ruff==0.16.0
       - run: ruff check .
       - run: ruff format --check .
-      - run: pip install -r requirements.txt
+      - run: pip install -r requirements-dev.txt
       - name: 単体テストを実行
         run: pytest -q tests/unit
