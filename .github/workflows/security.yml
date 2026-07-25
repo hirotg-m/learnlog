@@ -1,0 +1,148 @@
+name: Security Scan
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 21 * * 0"
+  workflow_dispatch:
+    inputs:
+      severity:
+        description: "Severity level"
+        required: true
+        type: choice
+        options:
+          - low
+          - medium
+          - high
+          - critical
+      diagnosis_result:
+        description: "Vulnerability diagnosis result"
+        required: true
+        type: string
+      remediation_details:
+        description: "Remediation details"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  frontend-dependency-audit:
+    name: Frontend Dependency Audit
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
+  backend-dependency-audit:
+    name: Backend Dependency Audit
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            api/requirements.txt
+            api/requirements-dev.txt
+      - name: Install audit tool
+        run: pip install pip-audit==2.9.0
+      - name: Run pip-audit (runtime dependencies)
+        run: |
+          pip-audit -r requirements.txt \
+            --ignore-vuln PYSEC-2026-161 \
+            --ignore-vuln PYSEC-2026-249 \
+            --ignore-vuln PYSEC-2026-248 \
+            --ignore-vuln PYSEC-2026-1942 \
+            --ignore-vuln PYSEC-2026-2281 \
+            --ignore-vuln PYSEC-2026-2280
+      - name: Run pip-audit (dev dependencies)
+        run: |
+          pip-audit -r requirements-dev.txt \
+            --ignore-vuln PYSEC-2026-161 \
+            --ignore-vuln PYSEC-2026-249 \
+            --ignore-vuln PYSEC-2026-248 \
+            --ignore-vuln PYSEC-2026-1942 \
+            --ignore-vuln PYSEC-2026-2281 \
+            --ignore-vuln PYSEC-2026-2280
+
+  save-remediation-record:
+    name: Save Remediation Record
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Generate record file
+        env:
+          SEVERITY: ${{ inputs.severity }}
+          DIAGNOSIS_RESULT: ${{ inputs.diagnosis_result }}
+          REMEDIATION_DETAILS: ${{ inputs.remediation_details }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -eu
+          timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          stamp_for_file="$(date -u +"%Y%m%d-%H%M%S")"
+
+          mkdir -p docs/security
+
+          record_file="docs/security/${stamp_for_file}-remediation.md"
+          cat > "$record_file" <<EOF
+          # Vulnerability Remediation Record
+
+          - Timestamp (UTC): ${timestamp}
+          - Actor: ${ACTOR}
+          - Branch: ${REF_NAME}
+          - Severity: ${SEVERITY}
+
+          ## Diagnosis Result
+
+          ${DIAGNOSIS_RESULT}
+
+          ## Remediation Details
+
+          ${REMEDIATION_DETAILS}
+          EOF
+
+          if [ ! -f docs/security/README.md ]; then
+            cat > docs/security/README.md <<'EOF'
+            # Security Remediation Records
+
+            This directory stores vulnerability diagnosis results and remediation details saved from GitHub Actions.
+            EOF
+          fi
+
+          printf -- "- %s | %s | %s\n" "${stamp_for_file}" "${SEVERITY}" "${record_file}" >> docs/security/README.md
+
+      - name: Commit and push record
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/security
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "docs: add vulnerability remediation record"
+          git push origin "HEAD:${{ github.ref_name }}"
